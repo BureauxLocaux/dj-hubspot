@@ -17,5 +17,14 @@ MESSAGE_EVENT_TO_EVENT_TYPE = {
     'company.propertyChange': EVENT_TYPE_CONTACT_UPDATED,
     'deal.creation': EVENT_TYPE_DEAL_CREATED,
     'deal.deletion': EVENT_TYPE_DEAL_DELETED,
-    'deal.propertyChange' EVENT_TYPE_DEAL_UPDATED,
+    'deal.propertyChange': EVENT_TYPE_DEAL_UPDATED,
 }
+
+# Contains a SHA-256 hash of the concatenation of the app-secret and of the
+# body of the request.
+# It helps us to ensure that a request has been sent by Hubspot.
+HUBSPOT_SIGNATURE_HEADER_NAME = 'HTTP_X_HUBSPOT_SIGNATURE'
+
+# Status codes
+HTTP_400_BAD_REQUEST = 400
+HTTP_401_UNAUTHORIZED = 401

@@ -1,24 +1,15 @@
-import json
+from datetime import datetime
 import logging
+import pytz
+
+from .exceptions import HubspotEventError
+
 
 logger = logging.getLogger('vendors.dj_hubspot')
 
 
-def handle_webhook(request):
-
-        # The Hubspot webhook transmits all data directly in the request body.
-        raw_message = request.body.decode('utf-8')
-        logger.debug("Received message from Hubspot webhook: ", raw_message)
-
-        try:
-            message = json.loads(raw_message)[0]  # We only support single-event notifications
-        except Exception:
-            logger.warning("Unable to parse Hubspot webhook request", decoded_request)
-        else:
-            return HubspotEvent(message)
-
-
 class HubspotEvent:
+    """Represent an hubspot webhook event."""
 
     EVENT_TYPE_COMPANY_CREATED = 'company_created'
     EVENT_TYPE_COMPANY_DELETED = 'company_deleted'
@@ -39,22 +30,45 @@ class HubspotEvent:
         'company.propertyChange': EVENT_TYPE_CONTACT_UPDATED,
         'deal.creation': EVENT_TYPE_DEAL_CREATED,
         'deal.deletion': EVENT_TYPE_DEAL_DELETED,
-        'deal.propertyChange' EVENT_TYPE_DEAL_UPDATED,
+        'deal.propertyChange': EVENT_TYPE_DEAL_UPDATED,
     }
 
     message = None
     event_type = None
 
     def __init__(self, message, **kwargs):
+        """
+
+        Parameters
+        ----------
+        message: dict
+        """
         self.message = message
 
-        raw_event = self.message.get('event')
+        raw_event_type = self.message.get('subscriptionType')
         try:
-            self.event_type = self.MESSAGE_EVENT_TO_EVENT_TYPE[raw_event]
+            self.event_type = self.MESSAGE_EVENT_TO_EVENT_TYPE[raw_event_type]
         except KeyError:
-            logger.warning("Unrecognized Hubspot event type: ", raw_event)
+            logger.warning("Unrecognized Hubspot event type: ", raw_event_type)
+            raise HubspotEventError()
         else:
             self.parse_event()
+
+    # Common event properties
+    # ------------------------------------------------------------------------------
+
+    @property
+    def occurred_at(self):
+        """
+        When this event occurred.
+
+        Returns
+        -------
+        datetime
+        """
+        ms = self.message['occurredAt']
+        # FIXME: not sure about the timezone yet.
+        return datetime.fromtimestamp(ms / 1000.0, pytz.utc)
 
     def parse_event(self):
         try:
