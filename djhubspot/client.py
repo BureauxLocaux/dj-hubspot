@@ -62,9 +62,9 @@ class HubspotClient:
         return self._properties_client
 
     def _get_products_client(self):
-        if not self._properties_client:
-            self._properties_client = PropertiesClient(api_key=settings.HUBSPOT_API_KEY)
-        return self._properties_client
+        if not self._products_client:
+            self._products_client = ProductsClient(api_key=settings.HUBSPOT_API_KEY)
+        return self._products_client
 
     def _get_companies_client(self):
         if not self._companies_client:
@@ -187,9 +187,27 @@ class HubspotClient:
     def get_product_data(self, product_id):
         pass
 
-    def create_product(self, product_data):
+    def get_all_products(self):
         pass
 
+    def create_product(self, name, description, price, custom_fields=None):
+        prod_client = self._get_products_client()
+        prod_data = {
+            'name': name,
+            'description': description,
+            'price': float(price),
+        }
+        if custom_fields:
+            prod_data.update(custom_fields)
+        print(prod_data)
+
+        return prod_client.create(data=prod_data)
+
+    def delete_product(self, product_id):
+        pass
+
+    def delete_all_products(self):
+        pass
 
     # Company-related methods
 
