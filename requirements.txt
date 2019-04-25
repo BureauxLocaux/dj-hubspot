@@ -1,0 +1,9 @@
+# This is indicative. For a development purpose.
+
+Django==2.0.13
+
+flake8==3.7.7
+py-money==0.4.0
+requests==2.21.0
+
+-e git+https://github.com/bureauxlocaux/hubspot3.git@feature/pierre/crm-pipelines#egg=hubspot3-dev

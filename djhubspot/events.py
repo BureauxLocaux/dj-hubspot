@@ -58,6 +58,11 @@ class HubspotEvent:
     # ------------------------------------------------------------------------------
 
     @property
+    def event_id(self):
+        """The id of the event on hubspot."""
+        return self.message['eventId']
+
+    @property
     def occurred_at(self):
         """
         When this event occurred.

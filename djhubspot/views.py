@@ -66,7 +66,7 @@ class WebhookView(View):
         logger.debug('--- New request from hubspot.')
 
         # FIXME: At the moment, warning lvl is the only way to output something ...
-        logger.warning(pretty_request(request))
+        logger.debug(pretty_request(request))
 
         self.raw_body = request.body.decode('utf-8')
 

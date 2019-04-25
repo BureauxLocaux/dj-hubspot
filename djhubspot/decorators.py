@@ -83,7 +83,6 @@ def request_is_from_hubspot(function):
     TODO
     """
     def wrap(request, *args, **kwargs):
-        logger.debug(pretty_request(request))
 
         if not assert_request_is_from_hubspot(request):
             return HttpResponse('Unauthorized', status=constants.HTTP_401_UNAUTHORIZED)

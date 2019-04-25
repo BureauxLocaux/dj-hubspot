@@ -1,3 +1,8 @@
+from datetime import datetime
+
+from django.utils.timezone import make_aware
+
+
 def pretty_request(request):
     """
     A simple function to convert a Django request to a string the way requests are meant to be
@@ -28,4 +33,22 @@ def pretty_request(request):
         content_type=request.META['CONTENT_TYPE'],
         headers=headers,
         body=request.body,
+    )
+
+
+def hubspot_timestamp_to_datetime(hs_timestamp):
+    """
+    Convert an hubspot timestamp (in millisecond) to a tz aware datetime.
+
+    Cf:
+    https://developers.hubspot.com/docs/faq/how-should-timestamps-be-formatted-for-hubspots-apis
+
+    Returns
+    -------
+    datetime
+    """
+    # We ensure to work on an integer as hubspot timestamps are transmitted as string.
+    hs_timestamp = int(hs_timestamp)
+    return make_aware(
+        datetime.fromtimestamp(hs_timestamp / 1000.0)
     )
