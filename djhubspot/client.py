@@ -307,18 +307,31 @@ class HubspotClient:
     def get_contact_data(self, contact_id):
         pass
 
-    def create_contact(self, company_data):
+    def create_contact(self, contact_data):
         payload = {
             'properties': [
                 {
                     'property': name,
                     'value': value,
                 }
-                for name, value in company_data.items()
+                for name, value in contact_data.items()
             ]
         }
         cont_client = self._get_contacts_client()
         return cont_client.create(payload)
+
+    def update_contact(self, contact_id, contact_data):
+        payload = {
+            'properties': [
+                {
+                    'property': name,
+                    'value': value,
+                }
+                for name, value in contact_data.items()
+            ]
+        }
+        cont_client = self._get_contacts_client()
+        return cont_client.update(contact_id, payload)
 
     def link_contact_to_company(self, contact_id, company_id):
         cont_client = self._get_contacts_client()
