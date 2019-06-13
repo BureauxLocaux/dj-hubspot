@@ -1,6 +1,5 @@
 import logging
 import json
-from json import JSONDecodeError
 
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -72,7 +71,7 @@ class WebhookView(View):
 
         try:
             json_events = json.loads(self.raw_body)
-        except (JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError):
             # The content of the request seems to be invalid.
             logger.error(
                 'Invalid request body received from hubspot.',
