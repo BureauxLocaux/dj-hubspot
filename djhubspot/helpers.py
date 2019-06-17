@@ -696,7 +696,7 @@ class Deal(HubspotAPIObject):
     # TODO: This cost few queries and should be explained. Also, the product-batch endpoint seems
     # TODO: not working at the moment ...
     @property
-    def products(self):
+    def products(self, extra_properties=None):
         """
         Get the products associated to the deal.
 
@@ -723,13 +723,21 @@ class Deal(HubspotAPIObject):
 
         # We have to use the association client in order to retrieve the lines of type product
         # associated to our deal.
+
+        properties_to_retrieve = [
+            'name', 'price', 'quantity',
+            'discount', 'hs_discount_percentage',
+        ]
+        if extra_properties:
+            properties_to_retrieve.extend(extra_properties)
+
         lines_ids = self.associations_client.get_deal_to_lines_items(self.hubspot_id)
         for line_id in lines_ids:
             # We first retrieve the line by using the `LinesClient` ...
             line = Line(
                 hubspot_id=line_id,
                 # We explicitly ask for the name and for the price of the product.
-                extra_properties=['name', 'price'],
+                extra_properties=properties_to_retrieve,
             )
             # ... we then convert it into a product (if possible) ...
             try:
