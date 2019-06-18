@@ -4,6 +4,7 @@ import time
 
 from django.conf import settings
 
+from hubspot3.associations import AssociationsClient
 from hubspot3.companies import CompaniesClient
 from hubspot3.contacts import ContactsClient
 from hubspot3.deals import DealsClient
@@ -30,6 +31,7 @@ class HubspotClient:
     def wait(self, delay=None):
         time.sleep(delay or self.POST_REQUEST_DELAY)
 
+    _associations_client = None
     _companies_client = None
     _contacts_client = None
     _deals_client = None
@@ -55,6 +57,11 @@ class HubspotClient:
             )
         ),  # lets us do self._mappings['companies']['key']['value'].append(id) in one pass  # noqa
     }
+
+    def _get_associations_client(self):
+        if not self._associations_client:
+            self._associations_client = AssociationsClient(api_key=settings.HUBSPOT_API_KEY)
+        return self._associations_client
 
     def _get_property_groups_client(self):
         if not self._property_groups_client:
@@ -330,6 +337,10 @@ class HubspotClient:
         for company in companies_to_delete:
             comp_client.delete(company['id'])
 
+    def get_company_deals(self, company_id):
+        """Retrieve the deals related to a company."""
+        associations_client = self._get_associations_client()
+        return associations_client.get_company_to_deals(company_id)
 
     # Contact-related methods
 
