@@ -24,8 +24,7 @@ logger = logging.getLogger('vendors.dj_hubspot')
 
 class HubspotAPIObject:
 
-    # Put the content of your API object there.
-    api_object_content = {}
+    api_object_content = None
 
     _associations_client = None
     _companies_client = None
@@ -39,7 +38,8 @@ class HubspotAPIObject:
     _properties_client = None
     _property_groups_client = None
 
-    def __init__(self, hubspot_id, fetch=True):
+    def __init__(self, hubspot_id, fetch=True, **kwargs):
+        self.api_object_content = {}
         self.hubspot_id = hubspot_id
         if fetch:
             self.fetch()
@@ -54,9 +54,11 @@ class HubspotAPIObject:
 
     @classmethod
     def from_api_object_content(cls, hubspot_id, api_object_content):
-        """
-        Instantiate the api object from an API response payload. This is useful to prevent to perform too many
-        calls to the hubspot API.
+        """Instantiate the api object from an API response payload.
+
+        This is useful to prevent to avoid performing too many requests
+        to the Hubspot API.
+
         """
         api_object = cls(hubspot_id, fetch=False)
         api_object.api_object_content = api_object_content
@@ -346,7 +348,6 @@ class Product(HubspotAPIObject):
     """Help to manipulate products through the Hubspot API."""
 
     _properties = ['name', 'price']
-
     _line_item_hubspot_id = None
 
     def __init__(
@@ -354,12 +355,12 @@ class Product(HubspotAPIObject):
             hubspot_id=None,
             fetch=True,
             extra_properties=None,
+            **kwargs
     ):
         if extra_properties:
             self._properties += extra_properties
 
-        # We first call init method without fetching (need to handle line_item_hubspot_id).
-        super().__init__(hubspot_id=hubspot_id, fetch=fetch)
+        super().__init__(hubspot_id=hubspot_id, fetch=fetch, **kwargs)
 
     @property
     def name(self):
@@ -373,8 +374,7 @@ class Product(HubspotAPIObject):
 
         try:
             return Money(price, getattr(Currency, currency_code))
-        # FIXME: Clean handled exceptions.
-        except (KeyError, InvalidOperation, TypeError):
+        except (InvalidOperation, KeyError, TypeError):
             return None
 
     @classmethod
@@ -395,6 +395,7 @@ class Product(HubspotAPIObject):
         ------
         ValueError:
             If the given `line_item` is not of type `PRODUCT`.
+
         """
         if not line_item.is_product:
             logger.error(
