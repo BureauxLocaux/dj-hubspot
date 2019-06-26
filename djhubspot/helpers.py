@@ -9,6 +9,7 @@ from hubspot3.associations import AssociationsClient
 from hubspot3.companies import CompaniesClient
 from hubspot3.contacts import ContactsClient
 from hubspot3.deals import DealsClient
+from hubspot3.error import HubspotNotFound
 from hubspot3.lines import LinesClient
 from hubspot3.owners import OwnersClient
 from hubspot3.pipelines import PipelinesClient
@@ -50,7 +51,12 @@ class HubspotAPIObject:
             f"Fetching Hubspot API object of type '{self.__class__}' "
             f"with id: {self.hubspot_id} ..."
         )
-        self.api_object_content = self._fetch_api_object()
+        try:
+            self.api_object_content = self._fetch_api_object()
+        except HubspotNotFound:
+            raise ValueError(
+                f"Unable to find a {self.__class__} with Hubspot ID: {self.hubspot_id}"
+            )
 
     @classmethod
     def from_api_object_content(cls, hubspot_id, api_object_content):
