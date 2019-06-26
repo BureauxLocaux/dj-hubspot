@@ -33,7 +33,7 @@ class HubspotSyncableManager(models.Manager):
 
 class HubspotSyncable(models.Model):
 
-    hubspot_id = models.IntegerField(
+    hubspot_id = models.BigIntegerField(
         _("Hubspot ID"),
         blank=True, null=True, unique=True,
         help_text=_("The unique identifier of this object in Hubspot"),
