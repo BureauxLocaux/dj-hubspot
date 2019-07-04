@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import pytz
 
-from .exceptions import HubspotEventError
+from .errors import HubspotEventError
 
 
 logger = logging.getLogger('vendors.dj_hubspot')
@@ -49,8 +49,9 @@ class HubspotEvent:
         try:
             self.event_type = self.MESSAGE_EVENT_TO_EVENT_TYPE[raw_event_type]
         except KeyError:
-            logger.warning("Unrecognized Hubspot event type: ", raw_event_type)
-            raise HubspotEventError()
+            error_message = "Unrecognized Hubspot event type: ", raw_event_type
+            logger.warning(error_message)
+            raise HubspotEventError(error_message)
         else:
             self.parse_event()
 

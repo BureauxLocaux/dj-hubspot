@@ -4,7 +4,6 @@ import logging
 from django.conf import settings
 from django.http import HttpResponse
 
-from .utils import pretty_request
 from . import constants
 
 logger = logging.getLogger('vendors.dj_hubspot')
