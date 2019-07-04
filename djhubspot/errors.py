@@ -81,19 +81,13 @@ class HubspotServerError(_HubspotServerError):
 
 class DJHubspotError(Exception):
     """
-    Sub class from hubspot3.
-
-    Provide an interface allowing users to import hubspot3 in a more intuitive way, directly from
-    djhubspot.
+    Errors from djhubspot.
     """
     pass
 
 
 class HubspotEventError(DJHubspotError):
     """
-    Sub class from hubspot3.
-
-    Provide an interface allowing users to import hubspot3 in a more intuitive way, directly from
-    djhubspot.
+    Error related to hubspot events.
     """
     pass
