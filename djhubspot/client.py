@@ -245,7 +245,8 @@ class HubspotClient:
     # Company-related methods
 
     def get_company_data(self, company_id):
-        pass
+        """Retrieve company data from a company id."""
+        return self._get_companies_client().get(company_id)
 
     def get_all_companies(self, extra_props=None):
         comp_client = self._get_companies_client()
