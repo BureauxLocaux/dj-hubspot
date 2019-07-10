@@ -58,54 +58,65 @@ class HubspotClient:
         ),  # lets us do self._mappings['companies']['key']['value'].append(id) in one pass  # noqa
     }
 
+    def __init__(self, hubspot_api_key=None):
+        """
+        Instantiate the hubspot client.
+
+        Parameters
+        ----------
+        hubspot_api_key (optional)
+            Could be used to instantiate the client by using a key different from the settings.
+        """
+        self.hubspot_api_key = hubspot_api_key or settings.HUBSPOT_API_KEY
+
     def _get_associations_client(self):
         if not self._associations_client:
-            self._associations_client = AssociationsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._associations_client = AssociationsClient(api_key=self.hubspot_api_key)
         return self._associations_client
 
     def _get_property_groups_client(self):
         if not self._property_groups_client:
-            self._property_groups_client = PropertyGroupsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._property_groups_client = PropertyGroupsClient(api_key=self.hubspot_api_key)
         return self._property_groups_client
 
     def _get_properties_client(self):
         if not self._properties_client:
-            self._properties_client = PropertiesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._properties_client = PropertiesClient(api_key=self.hubspot_api_key)
         return self._properties_client
 
     def _get_products_client(self):
         if not self._products_client:
-            self._products_client = ProductsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._products_client = ProductsClient(api_key=self.hubspot_api_key)
         return self._products_client
 
     def _get_companies_client(self):
         if not self._companies_client:
-            self._companies_client = CompaniesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._companies_client = CompaniesClient(api_key=self.hubspot_api_key)
         return self._companies_client
 
     def _get_contacts_client(self):
         if not self._contacts_client:
-            self._contacts_client = ContactsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._contacts_client = ContactsClient(api_key=self.hubspot_api_key)
         return self._contacts_client
 
     def _get_deals_client(self):
         if not self._deals_client:
-            self._deals_client = DealsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._deals_client = DealsClient(api_key=self.hubspot_api_key)
         return self._deals_client
 
     def _get_engagements_client(self):
         if not self._engagements_client:
-            self._engagements_client = EngagementsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._engagements_client = EngagementsClient(api_key=self.hubspot_api_key)
         return self._engagements_client
 
     def _get_owners_client(self):
         if not self._owners_client:
-            self._owners_client = OwnersClient(api_key=settings.HUBSPOT_API_KEY)
+            self._owners_client = OwnersClient(api_key=self.hubspot_api_key)
         return self._owners_client
 
     def _get_lines_client(self):
         if not self._lines_client:
-            self._lines_client = LinesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._lines_client = LinesClient(api_key=self.hubspot_api_key)
         return self._lines_client
 
     # Property-related methods
