@@ -10,10 +10,17 @@ from hubspot3.companies import CompaniesClient
 from hubspot3.contacts import ContactsClient
 from hubspot3.deals import DealsClient
 from hubspot3.error import HubspotNotFound
+from hubspot3.globals import (
+    OBJECT_TYPE_COMPANIES,
+    OBJECT_TYPE_CONTACTS,
+    OBJECT_TYPE_DEALS,
+    OBJECT_TYPE_PRODUCTS,
+)
 from hubspot3.lines import LinesClient
 from hubspot3.owners import OwnersClient
 from hubspot3.pipelines import PipelinesClient
 from hubspot3.products import ProductsClient
+from hubspot3.properties import PropertiesClient
 from money.currency import Currency
 from money.money import Money
 
@@ -140,6 +147,12 @@ class HubspotAPIObject:
         if not self._products_client:
             self._products_client = ProductsClient(api_key=settings.HUBSPOT_API_KEY)
         return self._products_client
+
+    @property
+    def properties_client(self):
+        if not self._properties_client:
+            self._properties_client = PropertiesClient(api_key=settings.HUBSPOT_API_KEY)
+        return self._properties_client
 
 
 class Company(HubspotAPIObject):
@@ -791,3 +804,116 @@ class Deal(HubspotAPIObject):
             self.hubspot_id,
             data,
         )
+
+
+class HubspotProperty:
+    """
+    Notes: `HubspotProperty` is currently not inheriting from `HubspotAPIObject` as it we dont currently don't support
+    the fetching of an individual field.
+
+    Fields dont have an id and should be fetched by their name:
+    https://developers.hubspot.com/docs/methods/companies/get_company_property
+
+    Property payload example:
+    ```
+    {
+        "name":"current_contract_end_date",
+        "label":"Date de fin de contrat",
+        "description":"",
+        "groupName":"customer_info",
+        "type":"datetime",
+        "fieldType":"date",
+        "createdAt":1557317008241,
+        "readOnlyDefinition":false,
+        "updatedAt":1557317008241,
+        "formField":false,
+        "displayOrder":1,
+        "readOnlyValue":false,
+        "hidden":false,
+        "mutableDefinitionNotDeletable":false,
+        "favorited":false,
+        "favoritedOrder":-1,
+        "calculated":false,
+        "externalOptions":false,
+        "displayMode":"current_value",
+        "showCurrencySymbol":null,
+        "hubspotDefined":null,
+        "createdUserId":null,
+        "textDisplayHint":null,
+        "numberDisplayHint":null,
+        "optionsAreMutable":null,
+        "referencedObjectType":null,
+        "isCustomizedDefault":false,
+        "searchableInGlobalSearch":false,
+        "currencyPropertyName":null,
+        "hasUniqueValue":false,
+        "deleted":false,
+        "updatedUserId":null,
+        "options":[]
+    }
+    ```
+    """
+
+    api_object_content = None
+
+    def __init__(self, api_object_content):
+        self.api_object_content = api_object_content
+
+    @property
+    def name(self):
+        return self.api_object_content['name']
+
+    @property
+    def type(self):
+        return self.api_object_content['type']
+
+    @property
+    def field_type(self):
+        return self.api_object_content['fieldType']
+
+    @property
+    def read_only(self):
+        return self.api_object_content.get('readOnlyValue', False)
+
+
+class HubspotProperties(HubspotAPIObject):
+    """
+    https://developers.hubspot.com/docs/methods/companies/get_company_properties
+    """
+
+    _properties = []
+
+    def __init__(self, object_type, fetch=True, **kwargs):
+        """
+        Parameters
+        ----------
+        object_type: str
+            The type of object for whom to fetch the properties.
+            Should be one of `companies`, `contacts`, `deals`, `products`.
+            The object type will be used as the hubspot id in order to fetch data from the API.
+        """
+        if object_type not in [
+            OBJECT_TYPE_COMPANIES,
+            OBJECT_TYPE_CONTACTS,
+            OBJECT_TYPE_DEALS,
+            OBJECT_TYPE_PRODUCTS,
+        ]:
+            raise ValueError(
+                "The given object type: {} is not a valid properties type.".format(object_type)
+            )
+        super().__init__(hubspot_id=object_type, fetch=fetch, **kwargs)
+
+    def _fetch_api_object(self):
+        return self.properties_client.get_all(object_type=self.hubspot_id)
+
+    @property
+    def properties(self):
+        """Retrieve properties as helper classes."""
+        if not self._properties:
+            for property_data in self.api_object_content:
+                self._properties.append(HubspotProperty(property_data))
+
+        return self._properties
+
+    def update(self, data):
+        raise NotImplementedError
