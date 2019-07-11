@@ -12,6 +12,7 @@ from hubspot3.engagements import EngagementsClient
 from hubspot3.error import HubspotBadRequest, HubspotServerError
 from hubspot3.lines import LinesClient
 from hubspot3.owners import OwnersClient
+from hubspot3.pipelines import PipelinesClient
 from hubspot3.products import ProductsClient
 from hubspot3.properties import PropertiesClient
 from hubspot3.property_groups import PropertyGroupsClient
@@ -41,6 +42,7 @@ class HubspotClient:
     _products_client = None
     _properties_client = None
     _property_groups_client = None
+    _pipelines_client = None
 
     _mappings = {
         'companies': defaultdict(
@@ -69,55 +71,62 @@ class HubspotClient:
         """
         self.hubspot_api_key = hubspot_api_key or settings.HUBSPOT_API_KEY
 
-    def _get_associations_client(self):
+    # TODO: We could simplify the following lines by using @property instead of getters.
+
+    def get_associations_client(self):
         if not self._associations_client:
             self._associations_client = AssociationsClient(api_key=self.hubspot_api_key)
         return self._associations_client
 
-    def _get_property_groups_client(self):
+    def get_property_groups_client(self):
         if not self._property_groups_client:
             self._property_groups_client = PropertyGroupsClient(api_key=self.hubspot_api_key)
         return self._property_groups_client
 
-    def _get_properties_client(self):
+    def get_properties_client(self):
         if not self._properties_client:
             self._properties_client = PropertiesClient(api_key=self.hubspot_api_key)
         return self._properties_client
 
-    def _get_products_client(self):
+    def get_products_client(self):
         if not self._products_client:
             self._products_client = ProductsClient(api_key=self.hubspot_api_key)
         return self._products_client
 
-    def _get_companies_client(self):
+    def get_companies_client(self):
         if not self._companies_client:
             self._companies_client = CompaniesClient(api_key=self.hubspot_api_key)
         return self._companies_client
 
-    def _get_contacts_client(self):
+    def get_contacts_client(self):
         if not self._contacts_client:
             self._contacts_client = ContactsClient(api_key=self.hubspot_api_key)
         return self._contacts_client
 
-    def _get_deals_client(self):
+    def get_deals_client(self):
         if not self._deals_client:
             self._deals_client = DealsClient(api_key=self.hubspot_api_key)
         return self._deals_client
 
-    def _get_engagements_client(self):
+    def get_engagements_client(self):
         if not self._engagements_client:
             self._engagements_client = EngagementsClient(api_key=self.hubspot_api_key)
         return self._engagements_client
 
-    def _get_owners_client(self):
+    def get_owners_client(self):
         if not self._owners_client:
             self._owners_client = OwnersClient(api_key=self.hubspot_api_key)
         return self._owners_client
 
-    def _get_lines_client(self):
+    def get_lines_client(self):
         if not self._lines_client:
             self._lines_client = LinesClient(api_key=self.hubspot_api_key)
         return self._lines_client
+
+    def get_pipelines_client(self):
+        if not self._pipelines_client:
+            self._pipelines_client = PipelinesClient(api_key=self.hubspot_api_key)
+        return self._pipelines_client
 
     # Property-related methods
 
@@ -156,7 +165,7 @@ class HubspotClient:
         - `textarea`
 
         """
-        prop_client = self._get_properties_client()
+        prop_client = self.get_properties_client()
         params = {
             'object_type': object_type,
             'code': code,
@@ -184,11 +193,11 @@ class HubspotClient:
         prop_client.create(**params)
 
     def delete_property(self, object_type, code):
-        prop_client = self._get_properties_client()
+        prop_client = self.get_properties_client()
         return prop_client.delete(object_type, code)
 
     def delete_all_custom_properties(self, object_type):
-        prop_client = self._get_properties_client()
+        prop_client = self.get_properties_client()
         return prop_client.delete_all_custom(object_type)
 
     def create_property_group(self, object_type, code, label):
@@ -202,15 +211,15 @@ class HubspotClient:
         The `code` parameter should not contain dashes, only underscores.
 
         """
-        pg_client = self._get_property_groups_client()
+        pg_client = self.get_property_groups_client()
         return pg_client.create(object_type, code, label)
 
     def delete_property_group(self, object_type, code):
-        pg_client = self._get_property_groups_client()
+        pg_client = self.get_property_groups_client()
         return pg_client.delete(object_type, code)
 
     def delete_all_custom_property_groups(self, object_type):
-        prop_client = self._get_property_groups_client()
+        prop_client = self.get_property_groups_client()
         return prop_client.delete_all_custom(object_type)
 
     # Product-related methods
@@ -220,11 +229,11 @@ class HubspotClient:
 
     # FIXME: Allow to add property.
     def get_all_products(self):
-        product_client = self._get_products_client()
+        product_client = self.get_products_client()
         return product_client.get_all()
 
     def create_product(self, name, description, price, custom_fields=None):
-        prod_client = self._get_products_client()
+        prod_client = self.get_products_client()
         prod_data = {
             'name': name,
             'description': description,
@@ -246,10 +255,10 @@ class HubspotClient:
 
     def get_company_data(self, company_id):
         """Retrieve company data from a company id."""
-        return self._get_companies_client().get(company_id)
+        return self.get_companies_client().get(company_id)
 
     def get_all_companies(self, extra_props=None):
-        comp_client = self._get_companies_client()
+        comp_client = self.get_companies_client()
         return comp_client.get_all(extra_props=extra_props or [])
 
     def _get_companies_mapping(self, prop_name, force_reindex=False):
@@ -292,7 +301,7 @@ class HubspotClient:
                 for name, value in company_data.items()
             ]
         }
-        comp_client = self._get_companies_client()
+        comp_client = self.get_companies_client()
         return comp_client.create(payload, **options)
 
     def update_company(self, company_id, company_data, **options):
@@ -306,7 +315,7 @@ class HubspotClient:
                 for name, value in company_data.items()
             ]
         }
-        comp_client = self._get_companies_client()
+        comp_client = self.get_companies_client()
         return comp_client.update(company_id, payload, **options)
 
     def create_company_note(self, company_id, note_body, **options):
@@ -321,11 +330,11 @@ class HubspotClient:
                 'body': note_body,
             }
         }
-        note_client = self._get_engagements_client()
+        note_client = self.get_engagements_client()
         return note_client.create(payload, **options)
 
     def delete_all_companies(self, having=None):
-        comp_client = self._get_companies_client()
+        comp_client = self.get_companies_client()
 
         # No filter, delete everything.
         if not having:
@@ -351,7 +360,7 @@ class HubspotClient:
 
     def get_company_deals(self, company_id):
         """Retrieve the deals related to a company."""
-        associations_client = self._get_associations_client()
+        associations_client = self.get_associations_client()
         return associations_client.get_company_to_deals(company_id)
 
     # Contact-related methods
@@ -369,7 +378,7 @@ class HubspotClient:
                 for name, value in contact_data.items()
             ]
         }
-        cont_client = self._get_contacts_client()
+        cont_client = self.get_contacts_client()
         return cont_client.create(payload)
 
     def update_contact(self, contact_id, contact_data):
@@ -383,7 +392,7 @@ class HubspotClient:
                 for name, value in contact_data.items()
             ]
         }
-        cont_client = self._get_contacts_client()
+        cont_client = self.get_contacts_client()
         return cont_client.update(contact_id, payload)
 
     def search_contact(self, search_query):
@@ -401,21 +410,21 @@ class HubspotClient:
         list of dict
             The result of the search as a list of contacts.
         """
-        contact_client = self._get_contacts_client()
+        contact_client = self.get_contacts_client()
         return contact_client.search(search_query)
 
     def get_contact_by_email(self, email):
         """Retrieve a contact by its email address."""
-        contact_client = self._get_contacts_client()
+        contact_client = self.get_contacts_client()
         return contact_client.get_contact_by_email(email)
 
     def link_contact_to_company(self, contact_id, company_id):
-        cont_client = self._get_contacts_client()
+        cont_client = self.get_contacts_client()
         return cont_client.link_contact_to_company(contact_id, company_id)
 
     def link_owner_to_company(self, owner_id, company_id):
         """Associate an owner to a company."""
-        owners_client = self._get_owners_client()
+        owners_client = self.get_owners_client()
         return owners_client.link_owner_to_company(owner_id, company_id)
 
     def create_contact_note(self, contact_id, note_body):
@@ -430,11 +439,11 @@ class HubspotClient:
                 'body': note_body,
             }
         }
-        note_client = self._get_engagements_client()
+        note_client = self.get_engagements_client()
         return note_client.create(payload)
 
     def delete_all_contacts(self, having=None):
-        cont_client = self._get_contacts_client()
+        cont_client = self.get_contacts_client()
 
         # No filter, delete everything.
         if not having:
@@ -491,7 +500,7 @@ class HubspotClient:
                 for name, value in deal_data.items()
             ]
         }
-        deals_client = self._get_deals_client()
+        deals_client = self.get_deals_client()
         return deals_client.create(data=payload)
 
     # Line items methods
@@ -515,9 +524,9 @@ class HubspotClient:
             }
             for name, value in line_item_data.items()
         ]
-        lines_client = self._get_lines_client()
+        lines_client = self.get_lines_client()
         return lines_client.create(data=payload)
 
     def link_line_item_to_deal(self, line_item_id, deal_id):
-        lines_client = self._get_lines_client()
+        lines_client = self.get_lines_client()
         return lines_client.link_line_item_to_deal(line_item_id, deal_id)

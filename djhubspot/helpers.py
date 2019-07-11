@@ -24,6 +24,8 @@ from hubspot3.properties import PropertiesClient
 from money.currency import Currency
 from money.money import Money
 
+from .client import HubspotClient
+
 from . import constants
 
 
@@ -46,9 +48,21 @@ class HubspotAPIObject:
     _properties_client = None
     _property_groups_client = None
 
-    def __init__(self, hubspot_id, fetch=True, **kwargs):
+    def __init__(self, hubspot_id, fetch=True, hubspot_client=None, **kwargs):
+        """
+        Parameters
+        ----------
+        hubspot_id: str
+        fetch: bool, optional
+        hubspot_client: HubspotClient, optional
+            Could be used to connect to hubspot when using credentials which are different than the one defined in
+            the settings.
+        """
         self.api_object_content = {}
         self.hubspot_id = hubspot_id
+
+        self.client = hubspot_client or HubspotClient()
+
         if fetch:
             self.fetch()
 
@@ -103,55 +117,55 @@ class HubspotAPIObject:
     @property
     def associations_client(self):
         if not self._associations_client:
-            self._associations_client = AssociationsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._associations_client = self.client.get_associations_client()
         return self._associations_client
 
     @property
     def companies_client(self):
         if not self._companies_client:
-            self._companies_client = CompaniesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._companies_client = self.client.get_companies_client()
         return self._companies_client
 
     @property
     def contacts_client(self):
         if not self._contacts_client:
-            self._contacts_client = ContactsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._contacts_client = self.client.get_contacts_client()
         return self._contacts_client
 
     @property
     def deals_client(self):
         if not self._deals_client:
-            self._deals_client = DealsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._deals_client = self.client.get_deals_client()
         return self._deals_client
 
     @property
     def lines_client(self):
         if not self._lines_client:
-            self._lines_client = LinesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._lines_client = self.client.get_lines_client()
         return self._lines_client
 
     @property
     def owners_client(self):
         if not self._owners_client:
-            self._owners_client = OwnersClient(api_key=settings.HUBSPOT_API_KEY)
+            self._owners_client = self.client.get_owners_client()
         return self._owners_client
 
     @property
     def pipelines_client(self):
         if not self._pipelines_client:
-            self._pipelines_client = PipelinesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._pipelines_client = self.client.get_pipelines_client()
         return self._pipelines_client
 
     @property
     def products_client(self):
         if not self._products_client:
-            self._products_client = ProductsClient(api_key=settings.HUBSPOT_API_KEY)
+            self._products_client = self.client.get_products_client()
         return self._products_client
 
     @property
     def properties_client(self):
         if not self._properties_client:
-            self._properties_client = PropertiesClient(api_key=settings.HUBSPOT_API_KEY)
+            self._properties_client = self.client.get_properties_client()
         return self._properties_client
 
 
@@ -300,10 +314,10 @@ class Line(HubspotAPIObject):
 
     _properties = []
 
-    def __init__(self, hubspot_id, fetch=True, extra_properties=None):
+    def __init__(self, hubspot_id, fetch=True, hubspot_client=None, extra_properties=None):
         if extra_properties:
             self._properties += extra_properties
-        super().__init__(hubspot_id, fetch)
+        super().__init__(hubspot_id, fetch, hubspot_client)
 
     @property
     def is_product(self):
@@ -373,13 +387,19 @@ class Product(HubspotAPIObject):
             self,
             hubspot_id=None,
             fetch=True,
+            hubspot_client=None,
             extra_properties=None,
             **kwargs
     ):
         if extra_properties:
             self._properties += extra_properties
 
-        super().__init__(hubspot_id=hubspot_id, fetch=fetch, **kwargs)
+        super().__init__(
+            hubspot_id=hubspot_id,
+            fetch=fetch,
+            hubspot_client=hubspot_client,
+            **kwargs,
+        )
 
     @property
     def name(self):
@@ -883,7 +903,7 @@ class HubspotProperties(HubspotAPIObject):
 
     _properties = []
 
-    def __init__(self, object_type, fetch=True, **kwargs):
+    def __init__(self, object_type, fetch=True, hubspot_client=None, **kwargs):
         """
         Parameters
         ----------
@@ -892,16 +912,21 @@ class HubspotProperties(HubspotAPIObject):
             Should be one of `companies`, `contacts`, `deals`, `products`.
             The object type will be used as the hubspot id in order to fetch data from the API.
         """
-        if object_type not in [
+        if object_type not in (
             OBJECT_TYPE_COMPANIES,
             OBJECT_TYPE_CONTACTS,
             OBJECT_TYPE_DEALS,
             OBJECT_TYPE_PRODUCTS,
-        ]:
+        ):
             raise ValueError(
                 "The given object type: {} is not a valid properties type.".format(object_type)
             )
-        super().__init__(hubspot_id=object_type, fetch=fetch, **kwargs)
+        super().__init__(
+            hubspot_id=object_type,
+            fetch=fetch,
+            hubspot_client=hubspot_client,
+            **kwargs,
+        )
 
     def _fetch_api_object(self):
         return self.properties_client.get_all(object_type=self.hubspot_id)
