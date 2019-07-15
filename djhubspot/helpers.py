@@ -5,10 +5,6 @@ from django.conf import settings
 from django.utils.functional import cached_property
 
 from djhubspot.utils import hubspot_timestamp_to_datetime
-from hubspot3.associations import AssociationsClient
-from hubspot3.companies import CompaniesClient
-from hubspot3.contacts import ContactsClient
-from hubspot3.deals import DealsClient
 from hubspot3.error import HubspotNotFound
 from hubspot3.globals import (
     OBJECT_TYPE_COMPANIES,
@@ -16,11 +12,7 @@ from hubspot3.globals import (
     OBJECT_TYPE_DEALS,
     OBJECT_TYPE_PRODUCTS,
 )
-from hubspot3.lines import LinesClient
 from hubspot3.owners import OwnersClient
-from hubspot3.pipelines import PipelinesClient
-from hubspot3.products import ProductsClient
-from hubspot3.properties import PropertiesClient
 from money.currency import Currency
 from money.money import Money
 
@@ -219,7 +211,7 @@ class Company(HubspotAPIObject):
         """
         hs_parent_id = self._get_property_value('hs_parent_company_id')
         if hs_parent_id:
-            return Company(hs_parent_id)
+            return Company(hs_parent_id, hubspot_client=self.client)
         return None
 
     @cached_property
@@ -229,7 +221,7 @@ class Company(HubspotAPIObject):
 
         contacts = []
         for vid in contacts_vids:
-            contact = Contact(vid)
+            contact = Contact(vid, hubspot_client=self.client)
             contacts.append(contact)
 
         return contacts
@@ -384,12 +376,12 @@ class Product(HubspotAPIObject):
     _line_item_hubspot_id = None
 
     def __init__(
-            self,
-            hubspot_id=None,
-            fetch=True,
-            hubspot_client=None,
-            extra_properties=None,
-            **kwargs
+        self,
+        hubspot_id=None,
+        fetch=True,
+        hubspot_client=None,
+        extra_properties=None,
+        **kwargs
     ):
         if extra_properties:
             self._properties += extra_properties
@@ -417,7 +409,7 @@ class Product(HubspotAPIObject):
             return None
 
     @classmethod
-    def from_line_item(cls, line_item):
+    def from_line_item(cls, line_item, hubspot_client=None):
         """
         Instantiate a `Product` from a `Line`. This is usefull to retrieve a
         product from the line items of a Deal.
@@ -425,6 +417,7 @@ class Product(HubspotAPIObject):
         Parameters
         ----------
         line_item: Line
+        hubspot_client
 
         Returns
         -------
@@ -463,7 +456,7 @@ class Product(HubspotAPIObject):
             **api_object_content,
         }
 
-        product = cls(hubspot_id=product_id, fetch=False)
+        product = cls(hubspot_id=product_id, fetch=False, hubspot_client=hubspot_client)
         product.api_object_content = product_api_object_content
         return product
 
@@ -496,8 +489,17 @@ class Owner(HubspotAPIObject):
         return self.api_object_content['email']
 
     @classmethod
-    def from_owner_email(cls, owner_email):
-        owners_client = OwnersClient(api_key=settings.HUBSPOT_API_KEY)
+    def from_owner_email(cls, owner_email, hubspot_api_key=None):
+        """
+
+        Parameters
+        ----------
+        owner_email: str
+        hubspot_api_key: str (optional)
+            Could be used to target an hubspot portal different than the one defined in the
+            settings.
+        """
+        owners_client = OwnersClient(api_key=hubspot_api_key or settings.HUBSPOT_API_KEY)
         hs_owner_data = owners_client.get_owner_by_email(owner_email)
         if not hs_owner_data:
             return None
@@ -552,7 +554,7 @@ class Deal(HubspotAPIObject):
 
         contacts = []
         for contact_vid in contacts_vids:
-            contact = Contact(contact_vid)
+            contact = Contact(contact_vid, hubspot_client=self.client)
             contacts.append(contact)
 
         return contacts
@@ -573,7 +575,7 @@ class Deal(HubspotAPIObject):
                 }
             )
             return None
-        return Company(company_id)
+        return Company(company_id, hubspot_client=self.client)
 
     @cached_property
     def owner(self):
@@ -781,7 +783,7 @@ class Deal(HubspotAPIObject):
             )
             # ... we then convert it into a product (if possible) ...
             try:
-                product = Product.from_line_item(line)
+                product = Product.from_line_item(line, hubspot_client=self.client)
             except ValueError:
                 logger.warning(
                     "Cannot retrieve a product from the hubspot line object.",
@@ -828,8 +830,8 @@ class Deal(HubspotAPIObject):
 
 class HubspotProperty:
     """
-    Notes: `HubspotProperty` is currently not inheriting from `HubspotAPIObject` as it we dont currently don't support
-    the fetching of an individual field.
+    Notes: `HubspotProperty` is currently not inheriting from `HubspotAPIObject` as it we dont
+    currently don't support the fetching of an individual field.
 
     Fields dont have an id and should be fetched by their name:
     https://developers.hubspot.com/docs/methods/companies/get_company_property
