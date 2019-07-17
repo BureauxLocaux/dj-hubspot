@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from django.utils.timezone import make_aware
+from datetime import datetime, timezone
 
 
 def pretty_request(request):
@@ -38,7 +36,7 @@ def pretty_request(request):
 
 def hubspot_timestamp_to_datetime(hs_timestamp):
     """
-    Convert an hubspot timestamp (in millisecond) to a tz aware datetime.
+    Convert an hubspot timestamp (in millisecond) to an UTC tz aware datetime.
 
     Cf:
     https://developers.hubspot.com/docs/faq/how-should-timestamps-be-formatted-for-hubspots-apis
@@ -46,9 +44,8 @@ def hubspot_timestamp_to_datetime(hs_timestamp):
     Returns
     -------
     datetime
+
     """
     # We ensure to work on an integer as hubspot timestamps are transmitted as string.
     hs_timestamp = int(hs_timestamp)
-    return make_aware(
-        datetime.fromtimestamp(hs_timestamp / 1000.0)
-    )
+    return datetime.fromtimestamp(hs_timestamp / 1000.0, tz=timezone.utc)
